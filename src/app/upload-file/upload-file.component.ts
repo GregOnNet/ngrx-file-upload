@@ -1,9 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Inject } from '@angular/core';
 import { select, Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
 import * as fromFileUploadActions from 'src/app/upload-file-store/actions';
 import * as fromFileUploadSelectors from 'src/app/upload-file-store/selectors';
 import * as fromFileUploadState from 'src/app/upload-file-store/state';
+import { FileUpload } from '../upload-file-store/duck';
+import { Duck } from '@co-it/ngrx-ducks';
 
 @Component({
   selector: 'app-upload-file',
@@ -18,32 +20,18 @@ export class UploadFileComponent implements OnInit {
   isReady$: Observable<boolean>;
   hasFailed$: Observable<boolean>;
 
-  constructor(private store$: Store<fromFileUploadState.State>) {}
+  constructor(
+    private store$: Store<fromFileUploadState.State>,
+    @Inject(FileUpload) private fileUpload: Duck<FileUpload>
+  ) {}
 
   ngOnInit() {
-    this.completed$ = this.store$.pipe(
-      select(fromFileUploadSelectors.selectUploadFileCompleted)
-    );
-
-    this.progress$ = this.store$.pipe(
-      select(fromFileUploadSelectors.selectUploadFileProgress)
-    );
-
-    this.error$ = this.store$.pipe(
-      select(fromFileUploadSelectors.selectUploadFileError)
-    );
-
-    this.isInProgress$ = this.store$.pipe(
-      select(fromFileUploadSelectors.selectUploadFileInProgress)
-    );
-
-    this.isReady$ = this.store$.pipe(
-      select(fromFileUploadSelectors.selectUploadFileReady)
-    );
-
-    this.hasFailed$ = this.store$.pipe(
-      select(fromFileUploadSelectors.selectUploadFileFailed)
-    );
+    this.completed$ = this.fileUpload.completed$;
+    this.progress$ = this.fileUpload.progress$;
+    this.error$ = this.fileUpload.error$;
+    this.isInProgress$ = this.fileUpload.isInProgress$;
+    this.isReady$ = this.fileUpload.isReady$;
+    this.hasFailed$ = this.fileUpload.hasFailed$;
   }
 
   uploadFile(event: any) {
