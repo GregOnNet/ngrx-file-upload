@@ -1,25 +1,21 @@
 import { HttpEvent, HttpEventType } from '@angular/common/http';
-import { Injectable } from '@angular/core';
-import { Actions, Effect, ofType } from '@ngrx/effects';
-import { Action } from '@ngrx/store';
-import { Observable, of } from 'rxjs';
+import { Inject, Injectable } from '@angular/core';
+import { Duck, whereType } from '@co-it/ngrx-ducks';
+import { Actions, Effect } from '@ngrx/effects';
+import { of } from 'rxjs';
 import { catchError, concatMap, map, takeUntil } from 'rxjs/operators';
 import serializeError from 'serialize-error';
 import { FileUploadService } from 'src/app/_services';
-import * as fromFileUploadActions from './actions';
+import { FileUpload } from './duck';
 
 @Injectable()
 export class UploadFileEffects {
   @Effect()
-  uploadRequestEffect$: Observable<Action> = this.actions$.pipe(
-    ofType(fromFileUploadActions.ActionTypes.UPLOAD_REQUEST),
+  uploadRequestEffect$ = this.actions$.pipe(
+    whereType(this.fileUpload.requestUpload),
     concatMap(action =>
       this.fileUploadService.uploadFile(action.payload.file).pipe(
-        takeUntil(
-          this.actions$.pipe(
-            ofType(fromFileUploadActions.ActionTypes.UPLOAD_CANCEL)
-          )
-        ),
+        takeUntil(this.actions$.pipe(whereType(this.fileUpload.cancel))),
         map(event => this.getActionFromHttpEvent(event)),
         catchError(error => of(this.handleError(error)))
       )
@@ -28,31 +24,32 @@ export class UploadFileEffects {
 
   constructor(
     private fileUploadService: FileUploadService,
-    private actions$: Actions<fromFileUploadActions.Actions>
+    private actions$: Actions,
+    @Inject(FileUpload) private fileUpload: Duck<FileUpload>
   ) {}
 
   private getActionFromHttpEvent(event: HttpEvent<any>) {
     switch (event.type) {
       case HttpEventType.Sent: {
-        return new fromFileUploadActions.UploadStartedAction();
+        return this.fileUpload.startUpload.action();
       }
       case HttpEventType.UploadProgress: {
-        return new fromFileUploadActions.UploadProgressAction({
+        return this.fileUpload.progressUpload.action({
           progress: Math.round((100 * event.loaded) / event.total)
         });
       }
       case HttpEventType.ResponseHeader:
       case HttpEventType.Response: {
         if (event.status === 200) {
-          return new fromFileUploadActions.UploadCompletedAction();
+          return this.fileUpload.completeUpload.action();
         } else {
-          return new fromFileUploadActions.UploadFailureAction({
+          return this.fileUpload.failure.action({
             error: event.statusText
           });
         }
       }
       default: {
-        return new fromFileUploadActions.UploadFailureAction({
+        return this.fileUpload.failure.action({
           error: `Unknown Event: ${JSON.stringify(event)}`
         });
       }
@@ -61,7 +58,7 @@ export class UploadFileEffects {
 
   private handleError(error: any) {
     const friendlyErrorMessage = serializeError(error).message;
-    return new fromFileUploadActions.UploadFailureAction({
+    return this.fileUpload.failure.action({
       error: friendlyErrorMessage
     });
   }

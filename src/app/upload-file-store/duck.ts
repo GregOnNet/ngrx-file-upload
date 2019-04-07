@@ -11,7 +11,7 @@ import { State, UploadStatus } from './state';
 })
 export class FileUpload {
   @Action('[File Upload Form] Request')
-  requestUpload(state: State): State {
+  requestUpload(state: State, payload: { file: File }): State {
     return {
       ...state,
       status: UploadStatus.Requested,
