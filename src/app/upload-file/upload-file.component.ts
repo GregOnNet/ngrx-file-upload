@@ -1,11 +1,7 @@
-import { Component, OnInit, Inject } from '@angular/core';
-import { select, Store } from '@ngrx/store';
-import { Observable } from 'rxjs';
-import * as fromFileUploadActions from 'src/app/upload-file-store/actions';
-import * as fromFileUploadSelectors from 'src/app/upload-file-store/selectors';
-import * as fromFileUploadState from 'src/app/upload-file-store/state';
-import { FileUpload } from '../upload-file-store/duck';
+import { Component, Inject, OnInit } from '@angular/core';
 import { Duck } from '@co-it/ngrx-ducks';
+import { Observable } from 'rxjs';
+import { FileUpload } from '../upload-file-store/duck';
 
 @Component({
   selector: 'app-upload-file',
@@ -20,10 +16,7 @@ export class UploadFileComponent implements OnInit {
   isReady$: Observable<boolean>;
   hasFailed$: Observable<boolean>;
 
-  constructor(
-    private store$: Store<fromFileUploadState.State>,
-    @Inject(FileUpload) private fileUpload: Duck<FileUpload>
-  ) {}
+  constructor(@Inject(FileUpload) private fileUpload: Duck<FileUpload>) {}
 
   ngOnInit() {
     this.completed$ = this.fileUpload.completed$;
@@ -38,21 +31,17 @@ export class UploadFileComponent implements OnInit {
     const files: FileList = event.target.files;
     const file = files.item(0);
 
-    this.store$.dispatch(
-      new fromFileUploadActions.UploadRequestAction({
-        file
-      })
-    );
+    this.fileUpload.requestUpload({ file });
 
     // clear the input form
     event.srcElement.value = null;
   }
 
   resetUpload() {
-    this.store$.dispatch(new fromFileUploadActions.UploadResetAction());
+    this.fileUpload.reset();
   }
 
   cancelUpload() {
-    this.store$.dispatch(new fromFileUploadActions.UploadCancelAction());
+    this.fileUpload.cancel();
   }
 }
