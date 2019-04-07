@@ -3,7 +3,7 @@ import { NgModule } from '@angular/core';
 import { EffectsModule } from '@ngrx/effects';
 import { StoreModule } from '@ngrx/store';
 import { UploadFileEffects } from './effects';
-import { featureReducer } from './reducer';
+import { featureReducer } from './duck';
 
 @NgModule({
   declarations: [],
