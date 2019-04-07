@@ -5,11 +5,19 @@ import {
   reducerFrom
 } from '@co-it/ngrx-ducks';
 import { State, UploadStatus } from './state';
+import * as selectors from './selectors';
 
 @Ducksify<State>({
   initialState: { status: UploadStatus.Ready, error: null, progress: 0 }
 })
 export class FileUpload {
+  completed$ = selectors.selectUploadFileCompleted;
+  progress$ = selectors.selectUploadFileProgress;
+  error$ = selectors.selectUploadFileError;
+  isInProgress$ = selectors.selectUploadFileInProgress;
+  isReady$ = selectors.selectUploadFileReady;
+  hasFailed$ = selectors.selectUploadFileFailed;
+
   @Action('[File Upload Form] Request')
   requestUpload(state: State, payload: { file: File }): State {
     return {
